@@ -303,59 +303,57 @@ $ 5.exit
 ## Reboot instances from console
 > Go in aws console reboot all the instance at a time
   $ 1.connect to an first instance ===> ssh -i nick.pem ubuntu@public_ip 
-
-dsh -a sudo chown -R ubuntu:ubuntu /data/kafka
-
-dsh -a sudo service zookeeper start
+  $ 2.dsh -a sudo chown -R ubuntu:ubuntu /data/kafka
+  $ 3.dsh -a sudo service zookeeper start
 
 
 ------**** Configure kafka properties ****-----
 
-dsh -a rm /usr/local/kafka/config/server.properties 
+$ 1.dsh -a rm /usr/local/kafka/config/server.properties 
+$ 2.nano /usr/local/kafka/config/server.properties
 
-nano /usr/local/kafka/config/server.properties
-## copy contents from file
-
-ssh zk2
-nano /usr/local/kafka/config/server.properties
-## copy contents from file (Make necessary changes)
-
+## copy contents from file server.properties
+$ 3.ssh zk2
+$ 4.nano /usr/local/kafka/config/server.properties
+## copy contents from file (Make necessary changes) ====> change broker.id=2 and advertise.listener //kf2	
+$ 5.exit
+$ 6.ssh zk3
+$ 7.nano /usr/local/kafka/config/server.properties
+## copy contents from file (Make necessary changes) ====> change broker.id=3 and advertise.listener //kf3
+$ 8.exit
 
 -----**** Configure kafka bootscripts ****-----
 
-sudo nano /etc/init.d/kafka
-
-sudo chmod +x /etc/init.d/kafka
-
-sudo chown root:root /etc/init.d/kafka 
-
-sudo update-rc.d kafka defaults
+$ 1.sudo nano /etc/init.d/kafka ===> copy past the data from kafka
+$ 2.sudo chmod +x /etc/init.d/kafka
+$ 3.sudo chown root:root /etc/init.d/kafka 
+$ 4.sudo update-rc.d kafka defaults
 
 ## Do this on other two nodes
 
-ssh zk2
-sudo nano /etc/init.d/kafka
-sudo chmod +x /etc/init.d/kafka
-sudo chown root:root /etc/init.d/kafka 
-sudo update-rc.d kafka defaults
-
-ssh zk3
-sudo nano /etc/init.d/kafka
-sudo chmod +x /etc/init.d/kafka
-sudo chown root:root /etc/init.d/kafka 
-sudo update-rc.d kafka defaults
-
+$ 1.ssh zk2
+$ 2.sudo nano /etc/init.d/kafka ===> copy past the data from file named kafka
+$ 3.sudo chmod +x /etc/init.d/kafka
+$ 4.sudo chown root:root /etc/init.d/kafka 
+$ 5.sudo update-rc.d kafka defaults
+$ 6.exit	
+$ 7.ssh zk3
+$ 8.sudo nano /etc/init.d/kafka ===> copy past the data from file named kafka
+$ 9.sudo chmod +x /etc/init.d/kafka
+$ 10.sudo chown root:root /etc/init.d/kafka 
+$ 11.sudo update-rc.d kafka defaults
+$ 12.exit
 
 -----**** Start kafka service ****-----
 
-dsh -a sudo service kafka start
+$ 1.dsh -a sudo service kafka start
 
-nc -vz kf2 9092
-nc -vz kf3 9092
+$ 2.nc -vz kf2 9092
+$ 3.nc -vz kf3 9092
 
 ## Check logs
 
-tail -f /usr/local/kafka/logs/server.log 
+$ 1.tail -f /usr/local/kafka/logs/server.log 
 
 ssh zk2 
 tail -f /usr/local/kafka/logs/server.log 
@@ -368,22 +366,32 @@ tail -f /usr/local/kafka/logs/server.log
 
 ## Create a topic
 
-kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --create --topic my-topic --replication-factor 3 --partitions 3 
+$ 1.kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --create --topic my-topic --replication-factor 3 --partitions 3 
 
 ## Create a producer
 
-kafka-console-producer.sh --broker-list kf1:9092,kf2:9092,kf3:9092 --topic my-topic 
+$ 1.kafka-console-producer.sh --broker-list kf1:9092,kf2:9092,kf3:9092 --topic my-topic 
 (publish some data)
+hi
+hello
+first topic
 
-## Create a consumer
-
-kafka-console-consumer.sh --bootstrap-server kf1:9092,kf2:9092,kf3:9092 --topic my-topic --from-beginning
+## Create a consumer use follwing command in another terminal
+> Open another terminal and ====> connect to the instance named broker2 ==> 
+$ 1.ssh -i nick.pem ubuntu@public_ip of broker2
+$ 2.kafka-console-consumer.sh --bootstrap-server kf1:9092,kf2:9092,kf3:9092 --topic my-topic --from-beginning
+hi
+hello
+first topic 
+live
+and ====> this data should be seen in previous terminal and ctrl + c to exit
 
 ## Create another topic
+this command in terminal 2 new terminal
 
-kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --create --topic my-topic2 --replication-factor 3 --partitions 3 
+$ 1.kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --create --topic my-topic2 --replication-factor 3 --partitions 3 
 
 ## List topics 
 
-kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --list
+$ 1.kafka-topics.sh --zookeeper zk1:2181,zk2:2181,zk3:2181/kafka --list
 
